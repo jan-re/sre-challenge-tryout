@@ -68,6 +68,9 @@ The images for the sre-challenge app are kind of huge but I didn't want to mess 
 | JDK | 21 to 24 |
 | git, curl | any |
 
+> [!IMPORTANT]  
+> You'll need to checkout https://github.com/kaktooss/sre-challenge sre-challenge in the same location as this README file.
+
 ## Run
 
 ```sh
