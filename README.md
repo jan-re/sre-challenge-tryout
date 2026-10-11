@@ -20,6 +20,8 @@ The app itself is a toy pipeline that passes a message from one end to the other
 - back: listens on Kafka, takes each message, and saves it into Postgres.
 - reader: a web API that lists what's been saved in Postgres.
 
+Not my work, comes from https://github.com/kaktooss/sre-challenge.
+
 There's also silly math being done to generate CPU activity.
 
 I've picked k3d to host, because that's what I'm used to: It does the job. It's a plain cluster without any hardening.
