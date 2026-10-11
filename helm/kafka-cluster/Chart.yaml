@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kafka-cluster
+description: Single-node KRaft Kafka cluster managed by the Strimzi operator
+type: application
+version: 0.1.0
+appVersion: "4.3.1"

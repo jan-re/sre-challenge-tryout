@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sre-challenge.fullname" . }}-reader
+  labels:
+    {{- include "sre-challenge.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.reader.replicas }}
+  selector:
+    matchLabels:
+      {{- include "sre-challenge.selectorLabels" (dict "root" . "component" "reader") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sre-challenge.selectorLabels" (dict "root" . "component" "reader") | nindent 8 }}
+    spec:
+      initContainers:
+        - name: wait-for-back
+          image: {{ .Values.initImage }}
+          # Blocks the container until the back service accepts TCP connections on port 8082, polling every 2 seconds.
+          command: ["sh", "-c", "until nc -z {{ include "sre-challenge.fullname" . }}-back {{ .Values.back.port }}; do sleep 2; done"]
+      containers:
+        - name: reader
+          image: {{ .Values.image.registry }}/sre-challenge/reader:{{ .Values.image.tag }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.reader.port }}
+            - name: management
+              containerPort: {{ .Values.managementPort }}
+          env:
+            {{- include "sre-challenge.datasourceEnv" . | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: management
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sre-challenge.fullname" . }}-reader
+  labels:
+    {{- include "sre-challenge.labels" . | nindent 4 }}
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.reader.port }}
+      targetPort: http
+  selector:
+    {{- include "sre-challenge.selectorLabels" (dict "root" . "component" "reader") | nindent 4 }}

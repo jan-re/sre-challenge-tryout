@@ -1,0 +1,3 @@
+name: kafka
+replicas: 1
+storage: 5Gi

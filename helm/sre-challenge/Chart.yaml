@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sre-challenge
+description: Front, back and reader services with their Kafka topic and PostgreSQL cluster
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

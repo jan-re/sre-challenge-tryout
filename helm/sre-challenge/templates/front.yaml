@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sre-challenge.fullname" . }}-front
+  labels:
+    {{- include "sre-challenge.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.front.replicas }}
+  selector:
+    matchLabels:
+      {{- include "sre-challenge.selectorLabels" (dict "root" . "component" "front") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sre-challenge.selectorLabels" (dict "root" . "component" "front") | nindent 8 }}
+    spec:
+      containers:
+        - name: front
+          image: {{ .Values.image.registry }}/sre-challenge/front:{{ .Values.image.tag }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.front.port }}
+            - name: management
+              containerPort: {{ .Values.managementPort }}
+          env:
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.kafka.bootstrapServers }}
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: management
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sre-challenge.fullname" . }}-front
+  labels:
+    {{- include "sre-challenge.labels" . | nindent 4 }}
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.front.port }}
+      targetPort: http
+  selector:
+    {{- include "sre-challenge.selectorLabels" (dict "root" . "component" "front") | nindent 4 }}

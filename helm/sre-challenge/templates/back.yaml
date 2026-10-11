@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sre-challenge.fullname" . }}-back
+  labels:
+    {{- include "sre-challenge.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.back.replicas }}
+  selector:
+    matchLabels:
+      {{- include "sre-challenge.selectorLabels" (dict "root" . "component" "back") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sre-challenge.selectorLabels" (dict "root" . "component" "back") | nindent 8 }}
+    spec:
+      initContainers:
+        - name: wait-for-db
+          image: {{ .Values.initImage }}
+          command: ["sh", "-c", "until nc -z {{ include "sre-challenge.fullname" . }}-db-rw 5432; do sleep 2; done"]
+      containers:
+        - name: back
+          image: {{ .Values.image.registry }}/sre-challenge/back:{{ .Values.image.tag }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.back.port }}
+            - name: management
+              containerPort: {{ .Values.managementPort }}
+          env:
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.kafka.bootstrapServers }}
+            {{- include "sre-challenge.datasourceEnv" . | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: management
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sre-challenge.fullname" . }}-back
+  labels:
+    {{- include "sre-challenge.labels" . | nindent 4 }}
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.back.port }}
+      targetPort: http
+  selector:
+    {{- include "sre-challenge.selectorLabels" (dict "root" . "component" "back") | nindent 4 }}
