@@ -1,0 +1,45 @@
+server:
+  port: 8084
+spring:
+  datasource:
+    # connectTimeout / socketTimeout (seconds) are PostgreSQL JDBC driver parameters.
+    # They cut dead TCP connections at the driver level so HikariCP never waits
+    # longer than these values for a network-level response from the server.
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: -placeholder-
+    password: -placeholder-
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # Maximum time (ms) a caller will wait for a connection from the pool.
+      # Keeps the DataSource health-check from blocking the servlet thread.
+      connection-timeout: 5000
+      # Maximum time (ms) to validate a pooled connection before declaring it bad.
+      validation-timeout: 3000
+      # Frequency (ms) at which HikariCP sends a keep-alive query on idle
+      # connections to detect silently-dropped DB links early (requires HikariCP 4+).
+      keepalive-time: 30000
+
+  jpa.hibernate.ddl-auto: validate
+
+# Actuator settings ##################################################
+management:
+  info.git.mode: full
+  server:
+    port: 8081
+    address: 0.0.0.0
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health, info, metrics, prometheus
+    access:
+      default: read_only
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
